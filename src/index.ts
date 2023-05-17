@@ -42,32 +42,32 @@ const generateDigestHeader = (
 };
 
 // GET request to get nonce and realm from the server
-axios
-  .get(url)
-  .catch(({ response }) => {
-    // extract nonce and realm from WWW-Authenticate header
-    const authenticateHeader = response.headers["www-authenticate"];
-    const match1 = authenticateHeader.match(/realm="(.*?)"/);
-    const match2 = authenticateHeader.match(/nonce="(.*?)"/);
-    const realm = match1[1];
-    const nonce = match2[1];
+// axios
+//   .get(url)
+//   .catch(({ response }) => {
+//     // extract nonce and realm from WWW-Authenticate header
+//     const authenticateHeader = response.headers["www-authenticate"];
+//     const match1 = authenticateHeader.match(/realm="(.*?)"/);
+//     const match2 = authenticateHeader.match(/nonce="(.*?)"/);
+//     const realm = match1[1];
+//     const nonce = match2[1];
 
-    // generate digest authorization header
-    const path = "/cgi-bin/magicBox.cgi?action=getLanguageCaps";
-    const method = "GET";
-    const header = generateDigestHeader(method, path, nonce, realm);
+//     // generate digest authorization header
+//     const path = "/cgi-bin/magicBox.cgi?action=getLanguageCaps";
+//     const method = "GET";
+//     const header = generateDigestHeader(method, path, nonce, realm);
 
-    // send second GET request with authorization header
-    return axios.get(url, {
-      headers: { Authorization: header },
-    });
-  })
-  .then((response) => {
-    console.log(response.data);
-  })
-  .catch((error) => {
-    console.error(error);
-  });
+//     // send second GET request with authorization header
+//     return axios.get(url, {
+//       headers: { Authorization: header },
+//     });
+//   })
+//   .then((response) => {
+//     console.log(response.data);
+//   })
+//   .catch((error) => {
+//     console.error(error);
+//   });
 
 class DahuaAuthenticator {
   public ip: string;
@@ -96,3 +96,14 @@ class DahuaAuthenticator {
     );
   }
 }
+
+const da = new DahuaAuthenticator("192.168.92.111", "admin", "Viact123");
+
+da.axios
+  .get(url)
+  .then((response) => {
+    console.log("response");
+  })
+  .catch((error) => {
+    console.error("error");
+  });
