@@ -2,7 +2,7 @@ import net from "net";
 
 function isPortOpen(ip, port, callback) {
   const socket = new net.Socket();
-  socket.setTimeout(2000); // 2 seconds
+  socket.setTimeout(10); // 10 mili-seconds
   socket.on("connect", function () {
     socket.destroy();
     callback(null, true);
@@ -23,7 +23,7 @@ export function checkPort(host, port) {
   return new Promise((resolve, reject) => {
     isPortOpen(host, port, function (err, isOpen) {
       if (err) {
-        reject(err);
+        reject(false);
       } else {
         resolve(isOpen);
       }
