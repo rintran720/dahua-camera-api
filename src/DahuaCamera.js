@@ -42,7 +42,7 @@ const generateDigestHeader = (method, path, nonce, realm) => {
  *
  * @returns {Object} Response Object
  */
-const parseResponse2Object = (response) => {
+export const parseResponse2Object = (response) => {
   const result = response
     ?.trim()
     .split("\n")
@@ -102,7 +102,7 @@ export class DahuaCamera {
       (res) => res,
       async ({ code, response, config }) => {
         // Returns Promise. reject if connection is not established.
-        if (code === "ECONNABORTED") {
+        if (code === "ECONNABORTED" || !response) {
           return Promise.reject(new Error("Can not connect this device"));
         }
 

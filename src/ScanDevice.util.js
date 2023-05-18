@@ -1,7 +1,14 @@
 import { networkInterfaces as _networkInterfaces } from "os";
 import { scanLocalNetwork } from "./net.util.js";
+import { DahuaCamera } from "./DahuaCamera.js";
 
-const ETHERNET = "en0"; // depend on OS, "en0" on MACOS
+/**
+ * Depend on OS:
+ * "en0": on MACOS
+ * "乙太網路": on this PC (window)
+ * */
+const ETHERNET = "乙太網路";
+
 export function scanOpeningPortInNetwork() {
   const networkInterfaces = _networkInterfaces();
   //console.log(networkInterfaces);
@@ -16,5 +23,24 @@ export function scanOpeningPortInNetwork() {
     return scanLocalNetwork(ipRange);
   } else {
     console.error("No IPv4 network interfaces found.");
+  }
+}
+
+export async function scanDevice(username, password) {
+  try {
+    const devices = await scanOpeningPortInNetwork();
+    const connectedDevices = [];
+    for (const idx in devices) {
+      try {
+        const cam = new DahuaCamera(devices[idx], username, password);
+        await cam.getNetworkSync();
+        connectedDevices.push(devices[idx]);
+      } catch (error) {
+        console.error(error);
+      }
+    }
+    return connectedDevices;
+  } catch (error) {
+    console.error(error);
   }
 }
