@@ -1,5 +1,6 @@
 import AXIOS from "axios";
 import crypto from "crypto";
+import net from "net";
 
 const username = "admin";
 const password = "Viact123";
@@ -10,6 +11,7 @@ const password = "Viact123";
  * @param path the path to request
  * @param nonce the nonce of the request
  * @param realm the realm of device
+ *
  * @returns {string} the digest header
  */
 const generateDigestHeader = (method, path, nonce, realm) => {
@@ -37,6 +39,7 @@ const generateDigestHeader = (method, path, nonce, realm) => {
 /**
  * TODO: parse Dahua response to JS Object
  * @param response the string of Dahua response
+ *
  * @returns {Object} Response Object
  */
 const parseResponse2Object = (response) => {
@@ -49,11 +52,15 @@ const parseResponse2Object = (response) => {
       const path = key.split(".");
       let obj = acc;
 
+      // Create a new path object.
       for (let i = 0; i < path.length; i++) {
+        // Add a path to the path array.
         if (!obj[path[i]]) {
           obj[path[i]] = {};
         }
+        // Set the value of the path i th path element.
         if (i === path.length - 1) {
+          // Set the path property of the object.
           if (value.includes("[")) {
             const [vKey, vValue] = value.split("=");
             const index = parseInt(vKey.match(/\[(\d+)\]/)[1], 10);
@@ -71,8 +78,35 @@ const parseResponse2Object = (response) => {
   return result;
 };
 
-class DahuaAuthenticator {
+function isPortOpen(port, host, callback) {
+  const client = new net.Socket();
+
+  client.connect(port, host, function () {
+    client.destroy();
+    callback(null, true);
+  });
+
+  client.on("error", function (err) {
+    client.destroy();
+    if (err.code === "ECONNREFUSED") {
+      callback(null, false);
+    } else {
+      callback(err);
+    }
+  });
+}
+
+class DahuaCameraService {
+  /**
+   * TODO: create new DahuaCameraService instance
+   * @param ip
+   * @param username
+   * @param password
+   *
+   * @return { DahuaCameraService }
+   */
   constructor(ip, username, password) {
+    this.ip = ip;
     this.baseURL = `http://${ip}`;
     this.username = username;
     this.password = password;
@@ -85,10 +119,12 @@ class DahuaAuthenticator {
     this.axios.interceptors.response.use(
       (res) => res,
       async ({ code, response, config }) => {
+        // Returns Promise. reject if connection is not established.
         if (code === "ECONNABORTED") {
           return Promise.reject(new Error("Can not connect this device"));
         }
 
+        // Returns a promise that resolves to the response.
         if (response.status === 401) {
           const originalRequest = { ...config };
           // extract nonce and realm from WWW-Authenticate header
@@ -105,6 +141,7 @@ class DahuaAuthenticator {
           originalRequest.headers["Authorization"] = digestHeader;
 
           return this.axios(originalRequest);
+          // Promise. resolve rejects if response status is less than 300.
         } else if (response.status < 300) {
           return Promise.reject(error);
         } else {
@@ -114,16 +151,49 @@ class DahuaAuthenticator {
     );
   }
 
+  async isOnlineAsync() {
+    try {
+      const result = await new Promise((resolve, reject) => {
+        isPortOpen(80, this.ip, function (err, isOpen) {
+          if (err) {
+            reject(`Error checking port status: ${err.message}`);
+          } else if (isOpen) {
+            resolve(true);
+          } else {
+            resolve(false);
+          }
+        });
+      });
+
+      return result;
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
+  /**
+   * @return { Promise } A promise that resolves when the network sync is complete or rejects with an error message. The promise's value is an object with the following properties
+   */
   getNetworkSync() {
     return this.axios.get(
       "/cgi-bin/configManager.cgi?action=getConfig&name=Network"
     );
   }
+  /**
+   * @return { Promise } A promise that resolves to RTSP configuration or rejects with an error message. The promise's value is an object with the following properties
+   */
   getRtspConfigSync() {
     return this.axios.get(
       "/cgi-bin/configManager.cgi?action=getConfig&name=RTSP"
     );
   }
+  /**
+   * TODO: set rtsp config for the camera
+   * @param enable
+   * @param port
+   *
+   * @return { Promise } A promise that resolves when the request completes. Rejects if the CGI request fails or is not responsive
+   */
   setRtspConfigSync(enable, port) {
     return this.axios.get(
       `/cgi-bin/configManager.cgi?action=setConfig&RTSP.Enable=${Boolean(
@@ -133,7 +203,7 @@ class DahuaAuthenticator {
   }
 }
 
-const da = new DahuaAuthenticator("192.168.92.111", "admin", "Viact123");
+const da = new DahuaCameraService("192.168.92.111", "admin", "Viact123");
 
 (async () => {
   try {
@@ -144,7 +214,7 @@ const da = new DahuaAuthenticator("192.168.92.111", "admin", "Viact123");
       const rtspInfo = parseResponse2Object(rtspInfoRes.data);
       //const setRtspRes = await da.setRtspConfigSync(true, 554);
       console.log(rtspInfo);
-      //console.log(setRtspRes);
+      console.log(await da.isOnlineAsync());
     }
   } catch (error) {
     console.error(error);
