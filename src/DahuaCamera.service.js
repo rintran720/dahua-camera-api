@@ -1,6 +1,6 @@
 import AXIOS from "axios";
 import crypto from "crypto";
-import { checkPort } from "./net.utils.js";
+import { checkPort } from "./net.util.js";
 
 const username = "admin";
 const password = "Viact123";

@@ -1,5 +1,5 @@
-import { DahuaCamera } from "./DahuaCameraService.js";
-import { scanOpeningPortInNetwork } from "./scan-device.js";
+import { DahuaCamera } from "./DahuaCamera.service.js";
+import { scanOpeningPortInNetwork } from "./ScanDevice.util.js";
 
 const camera = new DahuaCamera("192.168.92.111", "admin", "Viact123");
 
@@ -7,14 +7,14 @@ const camera = new DahuaCamera("192.168.92.111", "admin", "Viact123");
   try {
     // const res = await camera.getNetworkSync();
     // if (res) {
-    //   const newworkInfo = parseResponse2Object(res.data);
+    //   const networkInfo = parseResponse2Object(res.data);
     //   const rtspInfoRes = await camera.getRtspConfigSync();
     //   const rtspInfo = parseResponse2Object(rtspInfoRes.data);
-    //   //const setRtspRes = await camera.setRtspConfigSync(true, 554);
+    //   // const setRtspRes = await camera.setRtspConfigSync(true, 554);
     //   console.log(rtspInfo);
     //   console.log(await camera.isOnlineAsync());
     // }
-    scanOpeningPortInNetwork();
+    console.log(await scanOpeningPortInNetwork());
   } catch (error) {
     console.error(error);
   }

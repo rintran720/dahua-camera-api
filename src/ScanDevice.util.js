@@ -1,9 +1,10 @@
 import { networkInterfaces as _networkInterfaces } from "os";
+import { scanLocalNetwork } from "./net.util.js";
 
 const ETHERNET = "乙太網路"; // depend on OS, "en0" on MACOS
 export function scanOpeningPortInNetwork() {
   const networkInterfaces = _networkInterfaces();
-  console.log(networkInterfaces);
+  //console.log(networkInterfaces);
   const ipv4Interfaces = networkInterfaces[ETHERNET]?.filter(
     ({ family }) => family === "IPv4"
   );
