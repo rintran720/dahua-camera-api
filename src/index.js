@@ -1,10 +1,8 @@
 import AXIOS from "axios";
 import crypto from "crypto";
-import { request } from "http";
 
 const username = "admin";
 const password = "Viact123";
-const url = "/cgi-bin/configManager.cgi?action=getConfig&name=Network";
 
 /**
  * TODO: function to generate digest header
@@ -12,6 +10,7 @@ const url = "/cgi-bin/configManager.cgi?action=getConfig&name=Network";
  * @param path the path to request
  * @param nonce the nonce of the request
  * @param realm the realm of device
+ * @returns {string} the digest header
  */
 const generateDigestHeader = (method, path, nonce, realm) => {
   const qop = "auth";
@@ -35,6 +34,11 @@ const generateDigestHeader = (method, path, nonce, realm) => {
   return `Digest username="${username}", realm="${realm}", nonce="${nonce}", uri="${path}", qop="${qop}", nc=${nc}, cnonce="${cnonce}", response="${digest}"`;
 };
 
+/**
+ * TODO: parse Dahua response to JS Object
+ * @param response the string of Dahua response
+ * @returns {Object} Response Object
+ */
 const parseResponse2Object = (response) => {
   const result = response
     ?.trim()
@@ -109,24 +113,38 @@ class DahuaAuthenticator {
       }
     );
   }
+
+  getNetworkSync() {
+    return this.axios.get(
+      "/cgi-bin/configManager.cgi?action=getConfig&name=Network"
+    );
+  }
+  getRtspConfigSync() {
+    return this.axios.get(
+      "/cgi-bin/configManager.cgi?action=getConfig&name=RTSP"
+    );
+  }
+  setRtspConfigSync(enable, port) {
+    return this.axios.get(
+      `/cgi-bin/configManager.cgi?action=setConfig&RTSP.Enable=${Boolean(
+        enable
+      )}&RTSP.Port=${Number(port)}`
+    );
+  }
 }
 
 const da = new DahuaAuthenticator("192.168.92.111", "admin", "Viact123");
 
 (async () => {
   try {
-    const res = await da.axios.get(url);
+    const res = await da.getNetworkSync();
     if (res) {
       const newworkInfo = parseResponse2Object(res.data);
-      const rtspInfoRes = await da.axios.get(
-        "/cgi-bin/configManager.cgi?action=getConfig&name=RTSP"
-      );
+      const rtspInfoRes = await da.getRtspConfigSync();
       const rtspInfo = parseResponse2Object(rtspInfoRes.data);
-      const setRtspRes = await da.axios.get(
-        "/cgi-bin/configManager.cgi?action=setConfig&RTSP.Enable=true&RTSP.Port=554"
-      );
+      //const setRtspRes = await da.setRtspConfigSync(true, 554);
       console.log(rtspInfo);
-      console.log(setRtspRes);
+      //console.log(setRtspRes);
     }
   } catch (error) {
     console.error(error);
