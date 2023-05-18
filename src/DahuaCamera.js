@@ -111,6 +111,9 @@ export class DahuaCamera {
           const originalRequest = { ...config };
           // extract nonce and realm from WWW-Authenticate header
           const authenticateHeader = response.headers["www-authenticate"];
+          if (!authenticateHeader) {
+            return Promise.reject(new Error("Can not access this device"));
+          }
           const match1 = authenticateHeader.match(/realm="(.*?)"/);
           const match2 = authenticateHeader.match(/nonce="(.*?)"/);
           const realm = match1[1];
